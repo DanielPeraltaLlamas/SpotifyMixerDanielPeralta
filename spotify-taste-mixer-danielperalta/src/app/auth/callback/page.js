@@ -29,7 +29,7 @@ export default function CallbackPage() {
     const savedState = localStorage.getItem('spotify_auth_state');
     if (!state || state !== savedState) {
       setError('Error de validación de seguridad (CSRF). Intenta iniciar sesión de nuevo.');
-      localStorage.removeItem('spotify_auth_state'); // ✅ bug corregido
+      localStorage.removeItem('spotify_auth_state');
       return;
     }
 
@@ -51,7 +51,7 @@ export default function CallbackPage() {
         }
 
         saveTokens(data.access_token, data.refresh_token, data.expires_in);
-        router.push('/dashboard'); // ✅ ruta corregida
+        router.push('/dashboard');
       } catch (error) {
         console.error('Error:', error);
         setError(error.message);
