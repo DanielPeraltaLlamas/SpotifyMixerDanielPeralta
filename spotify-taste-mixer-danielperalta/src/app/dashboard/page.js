@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import Header from '@/components/Header';
+import GenreWidget from '@/components/widgets/GenreWidget';
 
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [selectedGenres, setSelectedGenres] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -31,8 +33,14 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#121212]">
       <Header />
       <main className="p-6">
-        <h2 className="text-white text-2xl font-bold">Dashboard</h2>
-        <p className="text-[#B3B3B3] mt-2">Aquí irán los widgets.</p>
+        <h2 className="text-white text-2xl font-bold mb-6">Dashboard</h2>
+        <GenreWidget
+          onSelect={setSelectedGenres}
+          selectedItems={selectedGenres}
+        />
+        <div className="mt-4 text-white">
+          <p>Géneros seleccionados: {selectedGenres.join(', ') || 'ninguno'}</p>
+        </div>
       </main>
     </div>
   );
