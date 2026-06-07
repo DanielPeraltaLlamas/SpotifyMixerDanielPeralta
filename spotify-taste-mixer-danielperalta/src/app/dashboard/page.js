@@ -5,12 +5,14 @@ import { isAuthenticated } from '@/lib/auth';
 import Header from '@/components/Header';
 import GenreWidget from '@/components/widgets/GenreWidget';
 import DecadeWidget from '@/components/widgets/DecadeWidget';
+import PopularityWidget from '@/components/widgets/PopularityWidget';
 
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedDecades, setSelectedDecades] = useState([]);
+  const [selectedPopularity, setSelectedPopularity] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -44,9 +46,14 @@ export default function Dashboard() {
           onSelect={setSelectedDecades}
           selectedItems={selectedDecades}
         />
+        <PopularityWidget
+          onSelect={setSelectedPopularity}
+          selectedItems={selectedPopularity}
+        />
         <div className="mt-4 text-white">
           <p>Géneros: {selectedGenres.join(', ') || 'ninguno'}</p>
           <p>Décadas: {selectedDecades.join(', ') || 'ninguna'}</p>
+          <p>Popularidad: {selectedPopularity ? `${selectedPopularity[0]}-${selectedPopularity[1]}` : 'ninguna'}</p>
         </div>
       </main>
     </div>
