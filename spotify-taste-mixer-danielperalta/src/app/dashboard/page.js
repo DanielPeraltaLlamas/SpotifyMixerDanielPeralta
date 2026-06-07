@@ -4,11 +4,13 @@ import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
 import Header from '@/components/Header';
 import GenreWidget from '@/components/widgets/GenreWidget';
+import DecadeWidget from '@/components/widgets/DecadeWidget';
 
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [selectedGenres, setSelectedGenres] = useState([]);
+  const [selectedDecades, setSelectedDecades] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,8 +40,13 @@ export default function Dashboard() {
           onSelect={setSelectedGenres}
           selectedItems={selectedGenres}
         />
+        <DecadeWidget
+          onSelect={setSelectedDecades}
+          selectedItems={selectedDecades}
+        />
         <div className="mt-4 text-white">
-          <p>Géneros seleccionados: {selectedGenres.join(', ') || 'ninguno'}</p>
+          <p>Géneros: {selectedGenres.join(', ') || 'ninguno'}</p>
+          <p>Décadas: {selectedDecades.join(', ') || 'ninguna'}</p>
         </div>
       </main>
     </div>
