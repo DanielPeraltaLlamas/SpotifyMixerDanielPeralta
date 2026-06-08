@@ -66,12 +66,15 @@ export async function generatePlaylist(preferences) {
 
   for (const genre of genres) {
     const results = await fetch(
-      `https://api.spotify.com/v1/search?type=track&q=genre:${genre}&limit=20`,
+      `https://api.spotify.com/v1/search?type=track&q=genre:${genre}&limit=10`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
     const data = await results.json();
-    allTracks.push(...data.tracks.items);
+    if (data.tracks?.items) {
+      allTracks.push(...data.tracks.items);
+    }
   }
+
 
   if (decades.length > 0) {
     allTracks = allTracks.filter(track => {
@@ -82,13 +85,13 @@ export async function generatePlaylist(preferences) {
       });
     });
   }
-
-  if (popularity) {
-    const [min, max] = popularity;
-    allTracks = allTracks.filter(
-      track => track.popularity >= min && track.popularity <= max
-    );
-  }
+  if (popularity && Array.isArray(popularity) && popularity.length === 2) {
+  const [min, max] = popularity;
+  allTracks = allTracks.filter(
+    track => track.popularity === undefined || 
+    (track.popularity >= min && track.popularity <= max)
+  );
+}
 
   const uniqueTracks = Array.from(
     new Map(allTracks.map(track => [track.id, track])).values()

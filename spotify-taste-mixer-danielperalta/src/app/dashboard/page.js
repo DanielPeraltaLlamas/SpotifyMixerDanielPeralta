@@ -2,23 +2,28 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
+import { generatePlaylist } from '@/lib/spotify';
 import Header from '@/components/Header';
 import GenreWidget from '@/components/widgets/GenreWidget';
 import DecadeWidget from '@/components/widgets/DecadeWidget';
 import PopularityWidget from '@/components/widgets/PopularityWidget';
-import MoodWidget from '@/components/widgets/MoodWidget';
 import ArtistWidget from '@/components/widgets/ArtistWidget';
 import TrackWidget from '@/components/widgets/TrackWidget';
+import MoodWidget from '@/components/widgets/MoodWidget';
+import PlaylistDisplay from '@/components/playlist/PlaylistDisplay';
 
 export default function Dashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [selectedDecades, setSelectedDecades] = useState([]);
-  const [selectedPopularity, setSelectedPopularity] = useState(null);
-  const [selectedMoods, setSelectedMoods] = useState([]);
+  const [selectedPopularity, setSelectedPopularity] = useState([]);
   const [selectedArtists, setSelectedArtists] = useState([]);
   const [selectedTracks, setSelectedTracks] = useState([]);
+  const [selectedMood, setSelectedMood] = useState([]);
+  const [playlist, setPlaylist] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -30,6 +35,43 @@ export default function Dashboard() {
     };
     checkAuth();
   }, [router]);
+
+  const handleGenerate = async () => {
+    if (
+      selectedGenres.length === 0 &&
+      selectedArtists.length === 0 &&
+      selectedTracks.length === 0
+    ) {
+      setError('Selecciona al menos un género, artista o canción.');
+      return;
+    }
+
+    setError(null);
+    setGenerating(true);
+
+    try {
+      const tracks = await generatePlaylist({
+        artists: selectedArtists,
+        genres: selectedGenres,
+        decades: selectedDecades,
+        popularity: selectedPopularity.length === 2 ? selectedPopularity : null
+      });
+      setPlaylist(tracks);
+    } catch (e) {
+      setError('Error al generar la playlist. Inténtalo de nuevo.');
+      console.error(e);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRemoveTrack = (trackId) => {
+    setPlaylist(playlist.filter(t => t.id !== trackId));
+  };
+
+  const handleRefresh = async () => {
+    await handleGenerate();
+  };
 
   if (loading) {
     return (
@@ -44,6 +86,7 @@ export default function Dashboard() {
       <Header />
       <main className="p-6">
         <h2 className="text-white text-2xl font-bold mb-6">Dashboard</h2>
+
         <GenreWidget
           onSelect={setSelectedGenres}
           selectedItems={selectedGenres}
@@ -56,10 +99,6 @@ export default function Dashboard() {
           onSelect={setSelectedPopularity}
           selectedItems={selectedPopularity}
         />
-        <MoodWidget
-          onSelect={setSelectedMoods}
-          selectedItems={selectedMoods}
-        />
         <ArtistWidget
           onSelect={setSelectedArtists}
           selectedItems={selectedArtists}
@@ -68,14 +107,37 @@ export default function Dashboard() {
           onSelect={setSelectedTracks}
           selectedItems={selectedTracks}
         />
-        <div className="mt-4 text-white">
-          <p>Géneros: {selectedGenres.join(', ') || 'ninguno'}</p>
-          <p>Décadas: {selectedDecades.join(', ') || 'ninguna'}</p>
-          <p>Popularidad: {selectedPopularity ? `${selectedPopularity[0]}-${selectedPopularity[1]}` : 'ninguna'}</p>
-          <p>Moods: {selectedMoods.join(', ') || 'ninguno'}</p>
-          <p>Artistas: {selectedArtists.map(a => a.name).join(', ') || 'ninguno'}</p>
-          <p>Canciones: {selectedTracks.map(t => t.name).join(', ') || 'ninguna'}</p>
-        </div>
+        <MoodWidget
+          onSelect={setSelectedMood}
+          selectedItems={selectedMood}
+        />
+
+        {error && (
+          <p className="text-red-500 mt-4">{error}</p>
+        )}
+
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="mt-6 text-white"
+        >
+          {generating ? 'Generando...' : 'Generar Playlist'}
+        </button>
+
+        {playlist.length > 0 && (
+          <button
+            onClick={handleRefresh}
+            disabled={generating}
+            className="mt-2 text-white"
+          >
+            Refrescar Playlist
+          </button>
+        )}
+
+        <PlaylistDisplay
+          tracks={playlist}
+          onRemove={handleRemoveTrack}
+        />
       </main>
     </div>
   );
