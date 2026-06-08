@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
-import { generatePlaylist } from '@/lib/spotify';
+import { generatePlaylist, getUserProfile, createPlaylist, addTracksToPlaylist } from '@/lib/spotify';
 import Header from '@/components/Header';
 import GenreWidget from '@/components/widgets/GenreWidget';
 import DecadeWidget from '@/components/widgets/DecadeWidget';
@@ -23,7 +23,9 @@ export default function Dashboard() {
   const [selectedMood, setSelectedMood] = useState([]);
   const [playlist, setPlaylist] = useState([]);
   const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -47,6 +49,7 @@ export default function Dashboard() {
     }
 
     setError(null);
+    setSuccessMsg(null);
     setGenerating(true);
 
     try {
@@ -54,7 +57,7 @@ export default function Dashboard() {
         artists: selectedArtists,
         genres: selectedGenres,
         decades: selectedDecades,
-        popularity: selectedPopularity.length === 2 ? selectedPopularity : null
+        popularity: selectedPopularity.length === 2 ? selectedPopularity : null,
       });
       setPlaylist(tracks);
     } catch (e) {
@@ -72,6 +75,29 @@ export default function Dashboard() {
   const handleRefresh = async () => {
     await handleGenerate();
   };
+
+  const handleSaveToSpotify = async () => {
+  if (playlist.length === 0) return;
+
+  setSaving(true);
+  setError(null);
+  setSuccessMsg(null);
+
+  try {
+    const newPlaylist = await createPlaylist(
+      'Mi Taste Mixer Playlist',
+      'Generada con Spotify Taste Mixer'
+    );
+    const trackUris = playlist.map(t => t.uri);
+    await addTracksToPlaylist(newPlaylist.id, playlist);
+    setSuccessMsg('¡Playlist guardada en tu cuenta de Spotify!');
+  } catch (e) {
+    setError('Error al guardar la playlist en Spotify.');
+    console.error(e);
+  } finally {
+    setSaving(false);
+  }
+};
 
   if (loading) {
     return (
@@ -112,26 +138,34 @@ export default function Dashboard() {
           selectedItems={selectedMood}
         />
 
-        {error && (
-          <p className="text-red-500 mt-4">{error}</p>
-        )}
+        {error && <p className="text-red-500 mt-4">{error}</p>}
+        {successMsg && <p className="text-green-500 mt-4">{successMsg}</p>}
 
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="mt-6 text-white"
+          className="mt-6 bg-[#1DB954] text-black px-6 py-2 rounded-full font-bold hover:bg-[#1ed760] transition-colors"
         >
           {generating ? 'Generando...' : 'Generar Playlist'}
         </button>
 
         {playlist.length > 0 && (
-          <button
-            onClick={handleRefresh}
-            disabled={generating}
-            className="mt-2 text-white"
-          >
-            Refrescar Playlist
-          </button>
+          <>
+            <button
+              onClick={handleRefresh}
+              disabled={generating}
+              className="mt-2 ml-2 bg-[#282828] text-white px-6 py-2 rounded-full hover:bg-[#383838] transition-colors"
+            >
+              Refrescar
+            </button>
+            <button
+              onClick={handleSaveToSpotify}
+              disabled={saving}
+              className="mt-2 ml-2 bg-[#282828] text-white px-6 py-2 rounded-full hover:bg-[#383838] transition-colors"
+            >
+              {saving ? 'Guardando...' : 'Guardar en Spotify'}
+            </button>
+          </>
         )}
 
         <PlaylistDisplay

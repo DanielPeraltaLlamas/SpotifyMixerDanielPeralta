@@ -99,3 +99,51 @@ export async function generatePlaylist(preferences) {
 
   return uniqueTracks;
 }
+
+export async function createPlaylist(name, description) {
+  const token = await getAccessToken();
+
+  const response = await fetch('https://api.spotify.com/v1/me/playlists', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name,
+      description,
+      public: false
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.log('Error crear playlist:', errorData);
+    throw new Error('Error al crear la playlist');
+  }
+
+  return response.json();
+}
+
+export async function addTracksToPlaylist(playlistId, tracks) {
+  const token = await getAccessToken();
+  
+  const uris = tracks.map(t => `spotify:track:${t.id}`);
+
+  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ uris })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.log('Error añadir tracks:', errorData);
+    throw new Error('Error al añadir tracks a la playlist');
+  }
+
+  return response.json();
+}
