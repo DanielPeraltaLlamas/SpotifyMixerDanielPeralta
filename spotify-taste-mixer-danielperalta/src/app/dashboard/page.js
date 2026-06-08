@@ -7,6 +7,7 @@ import GenreWidget from '@/components/widgets/GenreWidget';
 import DecadeWidget from '@/components/widgets/DecadeWidget';
 import PopularityWidget from '@/components/widgets/PopularityWidget';
 import MoodWidget from '@/components/widgets/MoodWidget';
+import ArtistWidget from '@/components/widgets/ArtistWidget';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [selectedDecades, setSelectedDecades] = useState([]);
   const [selectedPopularity, setSelectedPopularity] = useState(null);
   const [selectedMoods, setSelectedMoods] = useState([]);
+  const [selectedArtists, setSelectedArtists] = useState([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,11 +58,16 @@ export default function Dashboard() {
           onSelect={setSelectedMoods}
           selectedItems={selectedMoods}
         />
+        <ArtistWidget
+          onSelect={setSelectedArtists}
+          selectedItems={selectedArtists}
+        />
         <div className="mt-4 text-white">
           <p>Géneros: {selectedGenres.join(', ') || 'ninguno'}</p>
           <p>Décadas: {selectedDecades.join(', ') || 'ninguna'}</p>
           <p>Popularidad: {selectedPopularity ? `${selectedPopularity[0]}-${selectedPopularity[1]}` : 'ninguna'}</p>
           <p>Moods: {selectedMoods.join(', ') || 'ninguno'}</p>
+          <p>Artistas: {selectedArtists.map(a => a.name).join(', ') || 'ninguno'}</p>
         </div>
       </main>
     </div>
