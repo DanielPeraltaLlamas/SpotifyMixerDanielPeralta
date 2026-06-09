@@ -76,28 +76,59 @@ export default function Dashboard() {
     await handleGenerate();
   };
 
+  const handleAddMore = async () => {
+    if (
+      selectedGenres.length === 0 &&
+      selectedArtists.length === 0 &&
+      selectedTracks.length === 0
+    ) {
+      setError('Selecciona al menos un género, artista o canción.');
+      return;
+    }
+
+    setError(null);
+    setGenerating(true);
+
+    try {
+      const newTracks = await generatePlaylist({
+        artists: selectedArtists,
+        genres: selectedGenres,
+        decades: selectedDecades,
+        popularity: selectedPopularity.length === 2 ? selectedPopularity : null,
+      });
+
+      const currentIds = new Set(playlist.map(t => t.id));
+      const unique = newTracks.filter(t => !currentIds.has(t.id));
+      setPlaylist([...playlist, ...unique]);
+    } catch (e) {
+      setError('Error al añadir canciones.');
+      console.error(e);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const handleSaveToSpotify = async () => {
-  if (playlist.length === 0) return;
+    if (playlist.length === 0) return;
 
-  setSaving(true);
-  setError(null);
-  setSuccessMsg(null);
+    setSaving(true);
+    setError(null);
+    setSuccessMsg(null);
 
-  try {
-    const newPlaylist = await createPlaylist(
-      'Mi Taste Mixer Playlist',
-      'Generada con Spotify Taste Mixer'
-    );
-    const trackUris = playlist.map(t => t.uri);
-    await addTracksToPlaylist(newPlaylist.id, playlist);
-    setSuccessMsg('¡Playlist guardada en tu cuenta de Spotify!');
-  } catch (e) {
-    setError('Error al guardar la playlist en Spotify.');
-    console.error(e);
-  } finally {
-    setSaving(false);
-  }
-};
+    try {
+      const newPlaylist = await createPlaylist(
+        'Mi Taste Mixer Playlist',
+        'Generada con Spotify Taste Mixer'
+      );
+      await addTracksToPlaylist(newPlaylist.id, playlist);
+      setSuccessMsg('¡Playlist guardada en tu cuenta de Spotify!');
+    } catch (e) {
+      setError('Error al guardar la playlist en Spotify.');
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -157,6 +188,13 @@ export default function Dashboard() {
               className="mt-2 ml-2 bg-[#282828] text-white px-6 py-2 rounded-full hover:bg-[#383838] transition-colors"
             >
               Refrescar
+            </button>
+            <button
+              onClick={handleAddMore}
+              disabled={generating}
+              className="mt-2 ml-2 bg-[#282828] text-white px-6 py-2 rounded-full hover:bg-[#383838] transition-colors"
+            >
+              + Añadir más
             </button>
             <button
               onClick={handleSaveToSpotify}
